@@ -41,9 +41,16 @@
       left: 0;
       transform: translateX(-100%);
       z-index: 100;
+      display: flex;
+      flex-direction: column;
     }
     .sidebar.open {
       transform: translateX(0);
+    }
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     }
     .sidebar-header {
       padding: 1rem;
@@ -205,16 +212,21 @@
     /* Responsive layout */
     @media (min-width: 768px) {
       .sidebar {
-        position: sticky;
+        position: fixed; /* Changed from sticky to fixed */
         top: 0;
         transform: translateX(0);
         height: 100vh;
+        overflow-y: hidden; /* Prevent the sidebar itself from scrolling */
       }
       .sidebar-close, .menu-button {
         display: none;
       }
       .main-content {
         padding: 2rem;
+        margin-left: 280px; /* Add margin to prevent content from being hidden under sidebar */
+      }
+      .container {
+        display: block; /* Change from flex to block layout */
       }
     }
     @media (max-width: 767px) {
@@ -242,17 +254,19 @@
         <h2>Folders</h2>
         <button class="sidebar-close" id="sidebar-close">&times;</button>
       </div>
-      <ul class="folder-list">
-        {% for folder in folders %}
-        <li class="folder-item">
-          {% if folder == '' %}
-            <a href="/" class="folder-link {% if current_folder == '' %}active{% endif %}">Home</a>
-          {% else %}
-            <a href="/folder/{{ folder }}" class="folder-link {% if current_folder == folder %}active{% endif %}">{{ folder }}</a>
-          {% endif %}
-        </li>
-        {% endfor %}
-      </ul>
+      <div class="sidebar-content">
+        <ul class="folder-list">
+          {% for folder in folders %}
+          <li class="folder-item">
+            {% if folder == '' %}
+              <a href="/" class="folder-link {% if current_folder == '' %}active{% endif %}">Home</a>
+            {% else %}
+              <a href="/folder/{{ folder }}" class="folder-link {% if current_folder == folder %}active{% endif %}">{{ folder }}</a>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
     </aside>
     
     <!-- Overlay for mobile -->
