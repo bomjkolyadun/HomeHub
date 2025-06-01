@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VoD Server</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #eee; padding: 2rem; }
+    video { width: 100%; max-width: 800px; display: block; margin: auto; }
+    .block { margin-bottom: 2rem; border-bottom: 1px solid #444; padding-bottom: 1rem; }
+    img { max-height: 200px; display: block; margin: 0 auto 1rem auto; }
+    
+    /* Pagination Styles */
+    .pagination { 
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0;
+      gap: 0.5rem;
+    }
+    .pagination a, .pagination span {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border: 1px solid #444;
+      background: #222;
+      color: #eee;
+      text-decoration: none;
+      border-radius: 3px;
+    }
+    .pagination a:hover {
+      background: #333;
+    }
+    .pagination .active {
+      background: #444;
+      font-weight: bold;
+    }
+    .pagination .disabled {
+      color: #666;
+      cursor: not-allowed;
+    }
+    .page-info {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h1>Video on Demand</h1>
+  
+  <div class="page-info">
+    Showing {{ videos|length }} videos of {{ total_videos }} total (Page {{ current_page }} of {{ total_pages }})
+  </div>
+  
+  <!-- Pagination controls -->
+  <div class="pagination">
+    {% if current_page > 1 %}
+      <a href="?page=1">&laquo; First</a>
+      <a href="?page={{ current_page - 1 }}">&lsaquo; Prev</a>
+    {% else %}
+      <span class="disabled">&laquo; First</span>
+      <span class="disabled">&lsaquo; Prev</span>
+    {% endif %}
+    
+    {# Show 5 pages around current page #}
+    {% set window_size = 5 %}
+    {% set half_window = (window_size // 2) %}
+    {% set window_start = [current_page - half_window, 1]|max %}
+    {% set window_end = [window_start + window_size - 1, total_pages]|min %}
+    
+    {% if window_start > 1 %}
+      <span class="disabled">...</span>
+    {% endif %}
+    
+    {% for page_num in range(window_start, window_end + 1) %}
+      {% if page_num == current_page %}
+        <span class="active">{{ page_num }}</span>
+      {% else %}
+        <a href="?page={{ page_num }}">{{ page_num }}</a>
+      {% endif %}
+    {% endfor %}
+    
+    {% if window_end < total_pages %}
+      <span class="disabled">...</span>
+    {% endif %}
+    
+    {% if current_page < total_pages %}
+      <a href="?page={{ current_page + 1 }}">Next &rsaquo;</a>
+      <a href="?page={{ total_pages }}">Last &raquo;</a>
+    {% else %}
+      <span class="disabled">Next &rsaquo;</span>
+      <span class="disabled">Last &raquo;</span>
+    {% endif %}
+  </div>
+  
+  <!-- Video list -->
+  {% for video in videos %}
+    <div class="block">
+      <h2>{{ video['rel_path'] }}</h2>
+      <video controls poster="/thumb/{{ video['thumb'] }}">
+        <source src="/video/{{ video['rel_path'] }}" type="video/mp4">
+      </video>
+    </div>
+  {% endfor %}
+  
+  <!-- Pagination controls (bottom) -->
+  <div class="pagination">
+    {% if current_page > 1 %}
+      <a href="?page=1">&laquo; First</a>
+      <a href="?page={{ current_page - 1 }}">&lsaquo; Prev</a>
+    {% else %}
+      <span class="disabled">&laquo; First</span>
+      <span class="disabled">&lsaquo; Prev</span>
+    {% endif %}
+    
+    {% if window_start > 1 %}
+      <span class="disabled">...</span>
+    {% endif %}
+    
+    {% for page_num in range(window_start, window_end + 1) %}
+      {% if page_num == current_page %}
+        <span class="active">{{ page_num }}</span>
+      {% else %}
+        <a href="?page={{ page_num }}">{{ page_num }}</a>
+      {% endif %}
+    {% endfor %}
+    
+    {% if window_end < total_pages %}
+      <span class="disabled">...</span>
+    {% endif %}
+    
+    {% if current_page < total_pages %}
+      <a href="?page={{ current_page + 1 }}">Next &rsaquo;</a>
+      <a href="?page={{ total_pages }}">Last &raquo;</a>
+    {% else %}
+      <span class="disabled">Next &rsaquo;</span>
+      <span class="disabled">Last &raquo;</span>
+    {% endif %}
+  </div>
+</body>
+</html>
