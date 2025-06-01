@@ -2,21 +2,29 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>VoD Server</title>
   <style>
     /* Base Styles */
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      width: 100%;
+      overflow-x: hidden;
+    }
     body { 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
       background: #111; 
-      color: #eee; 
+      color: #eee;
+      width: 100%;
+      overflow-x: hidden;
     }
 
     /* Layout */
     .container {
       display: flex;
       min-height: 100vh;
+      width: 100%;
+      overflow-x: hidden;
     }
 
     /* Sidebar */
@@ -77,6 +85,8 @@
       flex: 1;
       padding: 1rem;
       width: 100%;
+      overflow-x: hidden;
+      max-width: 100vw;
     }
     
     /* Header */
@@ -103,11 +113,24 @@
     .video-container {
       max-width: 1200px;
       margin: 0 auto;
+      width: 100%;
     }
     .block { 
       margin-bottom: 2rem; 
       border-bottom: 1px solid #444; 
-      padding-bottom: 1rem; 
+      padding-bottom: 1rem;
+      width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+    .block h2 {
+      font-size: 1.2rem;
+      line-height: 1.4;
+      margin-bottom: 1rem;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
+      hyphens: auto;
     }
     video { 
       width: 100%; 
@@ -126,6 +149,23 @@
       background: #222;
       border-radius: 4px;
       font-size: 0.9rem;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+    .filename-warning {
+      display: inline-block;
+      color: #f0ad4e;
+      margin-left: 0.5rem;
+      cursor: help;
+    }
+    .filename-warning-box {
+      margin: 0.5rem 0 1rem;
+      padding: 0.5rem 1rem;
+      background-color: rgba(240, 173, 78, 0.2);
+      border-left: 3px solid #f0ad4e;
+      border-radius: 3px;
+      font-size: 0.9rem;
+      color: #f0ad4e;
     }
     
     /* Pagination Styles */
@@ -290,9 +330,20 @@
     
     {% for video in videos %}
       <div class="block">
-        <h2>{{ video['rel_path'].split('/')[-1] }}</h2>
+        <h2>
+          {{ video['rel_path'].split('/')[-1] }}
+          {% if video['has_issue'] %}
+            <span class="filename-warning" title="This filename may cause playback issues due to special characters">⚠️</span>
+          {% endif %}
+        </h2>
+        {% if video['has_issue'] %}
+          <div class="filename-warning-box">
+            This file has a problematic name that may affect playback.
+            Consider renaming it to avoid special characters like %, &, spaces, etc.
+          </div>
+        {% endif %}
         <video controls poster="/thumb/{{ video['thumb'] }}">
-          <source src="/video/{{ video['rel_path'] }}" type="video/mp4">
+          <source src="/video/{{ video['encoded_path'] }}" type="video/mp4">
         </video>
       </div>
     {% endfor %}

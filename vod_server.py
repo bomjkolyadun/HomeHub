@@ -3,6 +3,8 @@ import os
 import subprocess
 import math
 import time
+import urllib.parse
+import re
 
 app = Flask(__name__)
 ROOT_DIR = os.path.abspath("../vids")
@@ -20,6 +22,22 @@ VIDEOS_CACHE = {
     'folders': [],
     'cache_ttl': 300  # Cache time-to-live in seconds (5 minutes)
 }
+
+# Check if a filename might cause issues with URL encoding
+def is_problematic_filename(filename):
+    # Characters that often cause issues when URL-encoded
+    problematic_chars = ['%', '&', '+', ' ', '?', '#', '=', ';', ':', '@', '$', ',', '<', '>', '{', '}', '|', '\\', '^', '~', '[', ']', '`']
+    
+    # Check if any problematic character exists in the filename
+    for char in problematic_chars:
+        if char in filename:
+            return True
+            
+    # Check if the filename is already URL-encoded (contains %)
+    if '%' in filename and re.search(r'%[0-9A-Fa-f]{2}', filename):
+        return True
+        
+    return False
 
 # Get top-level folders
 def get_folders(force_refresh=False):
@@ -90,9 +108,16 @@ def find_videos(folder='', force_refresh=False):
                 rel_path = os.path.relpath(full_path, ROOT_DIR)
                 safe_name = rel_path.replace("/", "_").replace(" ", "_")
                 
+                # Check if this filename might cause issues
+                filename = os.path.basename(rel_path)
+                has_issue = is_problematic_filename(filename)
+                
                 videos.append({
                     'rel_path': rel_path,
-                    'thumb': f"{safe_name}.jpg"
+                    'thumb': f"{safe_name}.jpg",
+                    'filename': filename,
+                    'has_issue': has_issue,
+                    'encoded_path': urllib.parse.quote(rel_path)
                 })
     
     # Update cache
@@ -154,7 +179,18 @@ def index(folder=''):
 
 @app.route("/video/<path:filename>")
 def stream_video(filename):
-    return send_from_directory(ROOT_DIR, filename)
+    # Handle both URL-encoded and normal filenames
+    try:
+        # First try with the filename as-is
+        return send_from_directory(ROOT_DIR, filename)
+    except:
+        try:
+            # Try with URL decoding in case it's double-encoded
+            decoded_filename = urllib.parse.unquote(filename)
+            return send_from_directory(ROOT_DIR, decoded_filename)
+        except Exception as e:
+            print(f"Error accessing file: {filename}, Error: {str(e)}")
+            abort(404)
 
 @app.route("/thumb/<path:filename>")
 def get_thumb(filename):
