@@ -2,17 +2,137 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VoD Server</title>
   <style>
-    body { font-family: sans-serif; background: #111; color: #eee; padding: 2rem; }
-    video { width: 100%; max-width: 800px; display: block; margin: auto; }
-    .block { margin-bottom: 2rem; border-bottom: 1px solid #444; padding-bottom: 1rem; }
-    img { max-height: 200px; display: block; margin: 0 auto 1rem auto; }
+    /* Base Styles */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      background: #111; 
+      color: #eee; 
+    }
+
+    /* Layout */
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 100%;
+      max-width: 280px;
+      background: #1a1a1a;
+      border-right: 1px solid #333;
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      transform: translateX(-100%);
+      z-index: 100;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .sidebar-header {
+      padding: 1rem;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sidebar-close {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .folder-list {
+      list-style: none;
+    }
+    .folder-item {
+      border-bottom: 1px solid #333;
+    }
+    .folder-link {
+      display: block;
+      padding: 1rem;
+      color: #eee;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+    .folder-link:hover {
+      background-color: #222;
+    }
+    .folder-link.active {
+      background-color: #444;
+      font-weight: bold;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 1rem;
+      width: 100%;
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #333;
+    }
+    .menu-button {
+      background: none;
+      border: none;
+      color: #eee;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .title {
+      margin-left: 1rem;
+    }
+    
+    /* Videos */
+    .video-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .block { 
+      margin-bottom: 2rem; 
+      border-bottom: 1px solid #444; 
+      padding-bottom: 1rem; 
+    }
+    video { 
+      width: 100%; 
+      max-width: 800px; 
+      display: block; 
+      margin: auto; 
+    }
+    img { 
+      max-height: 200px; 
+      display: block; 
+      margin: 0 auto 1rem auto; 
+    }
+    .folder-path {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background: #222;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
     
     /* Pagination Styles */
     .pagination { 
       display: flex;
       justify-content: center;
+      flex-wrap: wrap;
       margin: 2rem 0;
       gap: 0.5rem;
     }
@@ -41,14 +161,83 @@
       margin-bottom: 1rem;
       color: #999;
     }
+    
+    /* Responsive layout */
+    @media (min-width: 768px) {
+      .sidebar {
+        position: sticky;
+        top: 0;
+        transform: translateX(0);
+        height: 100vh;
+      }
+      .sidebar-close, .menu-button {
+        display: none;
+      }
+      .main-content {
+        padding: 2rem;
+      }
+    }
+    @media (max-width: 767px) {
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 90;
+        display: none;
+      }
+      .overlay.open {
+        display: block;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Video on Demand</h1>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>Folders</h2>
+        <button class="sidebar-close" id="sidebar-close">&times;</button>
+      </div>
+      <ul class="folder-list">
+        {% for folder in folders %}
+        <li class="folder-item">
+          {% if folder == '' %}
+            <a href="/" class="folder-link {% if current_folder == '' %}active{% endif %}">Root</a>
+          {% else %}
+            <a href="/folder/{{ folder }}" class="folder-link {% if current_folder == folder %}active{% endif %}">{{ folder }}</a>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </aside>
+    
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="header">
+        <div>
+          <button class="menu-button" id="menu-button">☰</button>
+          <h1 class="title">Video on Demand</h1>
+        </div>
+        <a href="/refresh" style="color: #aaa; text-decoration: none; font-size: 0.9rem;">Refresh Cache</a>
+      </header>
+      
+      {% if current_folder != '' %}
+      <div class="folder-path">
+        <a href="/" style="color: #aaa; text-decoration: none;">Root</a> / {{ current_folder }}
+      </div>
+      {% endif %}
+      
+      <div class="page-info">
+        Showing {{ videos|length }} videos of {{ total_videos }} total (Page {{ current_page }} of {{ total_pages }})
+      </div>
   
-  <div class="page-info">
-    Showing {{ videos|length }} videos of {{ total_videos }} total (Page {{ current_page }} of {{ total_pages }})
-  </div>
   
   <!-- Pagination controls -->
   <div class="pagination">
@@ -92,14 +281,22 @@
   </div>
   
   <!-- Video list -->
-  {% for video in videos %}
-    <div class="block">
-      <h2>{{ video['rel_path'] }}</h2>
-      <video controls poster="/thumb/{{ video['thumb'] }}">
-        <source src="/video/{{ video['rel_path'] }}" type="video/mp4">
-      </video>
-    </div>
-  {% endfor %}
+  <div class="video-container">
+    {% if videos|length == 0 %}
+      <div style="text-align: center; padding: 2rem; color: #999;">
+        No videos found in this folder
+      </div>
+    {% endif %}
+    
+    {% for video in videos %}
+      <div class="block">
+        <h2>{{ video['rel_path'].split('/')[-1] }}</h2>
+        <video controls poster="/thumb/{{ video['thumb'] }}">
+          <source src="/video/{{ video['rel_path'] }}" type="video/mp4">
+        </video>
+      </div>
+    {% endfor %}
+  </div>
   
   <!-- Pagination controls (bottom) -->
   <div class="pagination">
@@ -135,5 +332,38 @@
       <span class="disabled">Last &raquo;</span>
     {% endif %}
   </div>
+      </main>
+    </div>
+    
+    <script>
+      // Mobile sidebar functionality
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      const menuButton = document.getElementById('menu-button');
+      const sidebarCloseButton = document.getElementById('sidebar-close');
+      
+      function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+      
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+      
+      menuButton.addEventListener('click', openSidebar);
+      sidebarCloseButton.addEventListener('click', closeSidebar);
+      overlay.addEventListener('click', closeSidebar);
+      
+      // Close sidebar on window resize if screen becomes large enough
+      window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+          closeSidebar();
+        }
+      });
+    </script>
 </body>
 </html>

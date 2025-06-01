@@ -9,7 +9,8 @@ ROOT_DIR = os.path.abspath("../vids")
 THUMB_DIR = os.path.join(os.path.dirname(__file__), "thumbnails")
 os.makedirs(THUMB_DIR, exist_ok=True)
 
-VIDEO_EXTENSIONS = ('.mp4', '.mov', '.mkv', '.avi')
+# ffmpeg supported video formats
+VIDEO_EXTENSIONS = ('.mp4', '.mov', '.mkv', '.avi','.m4v', '.webm', '.flv', '.wmv')
 VIDEOS_PER_PAGE = 10  # Number of videos to display per page
 
 # Cache for video list and folders
@@ -19,6 +20,32 @@ VIDEOS_CACHE = {
     'folders': [],
     'cache_ttl': 300  # Cache time-to-live in seconds (5 minutes)
 }
+
+# Get top-level folders
+def get_folders(force_refresh=False):
+    current_time = time.time()
+    
+    # Check if cache is valid
+    if (not force_refresh and 
+        VIDEOS_CACHE['folders'] and 
+        current_time - VIDEOS_CACHE['last_updated'] < VIDEOS_CACHE['cache_ttl']):
+        # Use cached folders
+        return VIDEOS_CACHE['folders']
+    
+    # Find all top-level directories
+    folders = ['']  # Include root directory
+    for item in os.listdir(ROOT_DIR):
+        item_path = os.path.join(ROOT_DIR, item)
+        if os.path.isdir(item_path):
+            folders.append(item)
+    
+    # Sort folders alphabetically 
+    folders.sort()
+    
+    # Update cache
+    VIDEOS_CACHE['folders'] = folders
+    
+    return folders
 
 # Generate thumbnail for a video
 def generate_thumbnail(video_rel_path):
@@ -36,15 +63,22 @@ def generate_thumbnail(video_rel_path):
     return f"{safe_name}.jpg"
 
 # Discover all videos with caching
-def find_videos(force_refresh=False):
+def find_videos(folder='', force_refresh=False):
     current_time = time.time()
     
     # Check if cache is valid
     if (not force_refresh and 
         VIDEOS_CACHE['videos'] and 
         current_time - VIDEOS_CACHE['last_updated'] < VIDEOS_CACHE['cache_ttl']):
-        # Use cached videos
-        return VIDEOS_CACHE['videos']
+        # Use cached videos, but filter by folder
+        all_videos = VIDEOS_CACHE['videos']
+        
+        if folder:
+            # Filter videos in the specified folder
+            return [v for v in all_videos if v['rel_path'].startswith(f"{folder}/")]
+        else:
+            # Return videos in the root directory (no slash in path)
+            return [v for v in all_videos if '/' not in v['rel_path']]
     
     # Cache expired or forced refresh, rebuild video list
     print("Refreshing video cache...")
@@ -65,23 +99,29 @@ def find_videos(force_refresh=False):
     VIDEOS_CACHE['videos'] = videos
     VIDEOS_CACHE['last_updated'] = current_time
     
-    return videos
+    # Filter by folder
+    if folder:
+        # Filter videos in the specified folder
+        return [v for v in videos if v['rel_path'].startswith(f"{folder}/")]
+    else:
+        # Return videos in the root directory (no slash in path)
+        return [v for v in videos if '/' not in v['rel_path']]
 
 # Get paginated videos with lazy thumbnail generation
-def get_paginated_videos(page=1):
-    all_videos = find_videos()
+def get_paginated_videos(page=1, folder=''):
+    all_videos = find_videos(folder=folder)
     total_videos = len(all_videos)
-    total_pages = math.ceil(total_videos / VIDEOS_PER_PAGE)
+    total_pages = math.ceil(total_videos / VIDEOS_PER_PAGE) if total_videos > 0 else 1
     
     # Ensure page is within valid range
-    page = max(1, min(page, total_pages)) if total_pages > 0 else 1
+    page = max(1, min(page, total_pages))
     
     # Calculate start and end indices
     start_idx = (page - 1) * VIDEOS_PER_PAGE
     end_idx = min(start_idx + VIDEOS_PER_PAGE, total_videos)
     
     # Get videos for current page
-    paginated_videos = all_videos[start_idx:end_idx]
+    paginated_videos = all_videos[start_idx:end_idx] if total_videos > 0 else []
     
     # Generate thumbnails only for videos on the current page
     for video in paginated_videos:
@@ -91,19 +131,25 @@ def get_paginated_videos(page=1):
         'videos': paginated_videos,
         'current_page': page,
         'total_pages': total_pages,
-        'total_videos': total_videos
+        'total_videos': total_videos,
+        'current_folder': folder
     }
 
 @app.route("/")
-def index():
+@app.route("/folder/<path:folder>")
+def index(folder=''):
     page = request.args.get('page', 1, type=int)
-    pagination_data = get_paginated_videos(page)
+    pagination_data = get_paginated_videos(page, folder)
+    folders = get_folders()
+    
     return render_template(
         "video_template.html",
         videos=pagination_data['videos'],
         current_page=pagination_data['current_page'],
         total_pages=pagination_data['total_pages'],
-        total_videos=pagination_data['total_videos']
+        total_videos=pagination_data['total_videos'],
+        current_folder=pagination_data['current_folder'],
+        folders=folders
     )
 
 @app.route("/video/<path:filename>")
@@ -117,9 +163,11 @@ def get_thumb(filename):
 @app.route("/refresh")
 def refresh_cache():
     find_videos(force_refresh=True)
+    get_folders(force_refresh=True)
     return "Video cache refreshed! <a href='/'>Back to videos</a>"
 
 if __name__ == "__main__":
     # Initial cache population
     find_videos(force_refresh=True)
+    get_folders(force_refresh=True)
     app.run(host="0.0.0.0", port=8082)  # Changed port to 8082
