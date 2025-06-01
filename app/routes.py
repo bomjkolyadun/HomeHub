@@ -1,0 +1,120 @@
+"""
+Route definitions for the VOD application.
+"""
+from flask import Blueprint, render_template, send_from_directory, request, abort
+import os
+import urllib.parse
+
+from app.utils.video_utils import decode_filename
+from app.utils.cache_manager import get_paginated_videos, get_folders, find_videos, init_cache
+
+# Create blueprint
+main_bp = Blueprint('main', __name__)
+
+# Access app config
+def get_config():
+    """Get the application configuration"""
+    from app.config import get_config as get_app_config
+    return get_app_config()
+
+# Cache initialization flag
+_cache_initialized = False
+
+@main_bp.before_app_request
+def setup_app_before_first_request():
+    """Initialize app settings before the first request"""
+    global _cache_initialized
+    
+    # Only run once
+    if _cache_initialized:
+        return
+    
+    # Get configuration from our new helper
+    config = get_config()
+    
+    # Initialize cache with config
+    init_cache(config)
+    
+    # Initial cache population
+    root_dir = os.path.abspath(config['directories']['videos'])
+    video_extensions = tuple(config['video']['extensions'])
+    find_videos(root_dir, video_extensions, force_refresh=True)
+    get_folders(root_dir, force_refresh=True)
+    
+    # Mark as initialized
+    _cache_initialized = True
+
+@main_bp.route("/")
+@main_bp.route("/folder/<path:folder>")
+def index(folder=''):
+    """Main page route handling folder navigation"""
+    from flask import current_app
+    config = current_app.config.get('VOD_CONFIG', {})
+    
+    # Get configuration values
+    root_dir = os.path.abspath(config['directories']['videos'])
+    web_assets_dir = os.path.abspath(config['directories']['web_assets'])
+    thumb_dir = os.path.join(web_assets_dir, "thumbnails")
+    videos_per_page = config['video']['per_page']
+    video_extensions = tuple(config['video']['extensions'])
+    
+    # Get pagination data
+    page = request.args.get('page', 1, type=int)
+    pagination_data = get_paginated_videos(
+        root_dir, thumb_dir, videos_per_page, video_extensions, page, folder
+    )
+    folders = get_folders(root_dir)
+    
+    return render_template(
+        "video_template.html",
+        videos=pagination_data['videos'],
+        current_page=pagination_data['current_page'],
+        total_pages=pagination_data['total_pages'],
+        total_videos=pagination_data['total_videos'],
+        current_folder=pagination_data['current_folder'],
+        folders=folders
+    )
+
+@main_bp.route("/video/<path:filename>")
+def stream_video(filename):
+    """Stream video file"""
+    from flask import current_app
+    config = current_app.config.get('VOD_CONFIG', {})
+    root_dir = os.path.abspath(config['directories']['videos'])
+    
+    # Handle both URL-encoded and normal filenames
+    try:
+        # First try with the filename as-is
+        return send_from_directory(root_dir, filename)
+    except:
+        try:
+            # Try with URL decoding in case it's double-encoded
+            decoded_filename = decode_filename(filename)
+            return send_from_directory(root_dir, decoded_filename)
+        except Exception as e:
+            print(f"Error accessing file: {filename}, Error: {str(e)}")
+            abort(404)
+
+@main_bp.route("/thumb/<path:filename>")
+def get_thumb(filename):
+    """Get thumbnail for video"""
+    from flask import current_app
+    config = current_app.config.get('VOD_CONFIG', {})
+    web_assets_dir = os.path.abspath(config['directories']['web_assets'])
+    thumb_dir = os.path.join(web_assets_dir, "thumbnails")
+    
+    return send_from_directory(thumb_dir, filename)
+
+@main_bp.route("/refresh")
+def refresh_cache():
+    """Refresh the video cache"""
+    from flask import current_app
+    config = current_app.config.get('VOD_CONFIG', {})
+    
+    root_dir = os.path.abspath(config['directories']['videos'])
+    video_extensions = tuple(config['video']['extensions'])
+    
+    find_videos(root_dir, video_extensions, force_refresh=True)
+    get_folders(root_dir, force_refresh=True)
+    
+    return "Video cache refreshed! <a href='/'>Back to videos</a>"
