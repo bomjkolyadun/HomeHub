@@ -206,7 +206,7 @@
         {% for folder in folders %}
         <li class="folder-item">
           {% if folder == '' %}
-            <a href="/" class="folder-link {% if current_folder == '' %}active{% endif %}">Root</a>
+            <a href="/" class="folder-link {% if current_folder == '' %}active{% endif %}">Home</a>
           {% else %}
             <a href="/folder/{{ folder }}" class="folder-link {% if current_folder == folder %}active{% endif %}">{{ folder }}</a>
           {% endif %}
@@ -230,7 +230,7 @@
       
       {% if current_folder != '' %}
       <div class="folder-path">
-        <a href="/" style="color: #aaa; text-decoration: none;">Root</a> / {{ current_folder }}
+        <a href="/" style="color: #aaa; text-decoration: none;">Home</a> / {{ current_folder }}
       </div>
       {% endif %}
       

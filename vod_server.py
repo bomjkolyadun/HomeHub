@@ -78,7 +78,7 @@ def find_videos(folder='', force_refresh=False):
             return [v for v in all_videos if v['rel_path'].startswith(f"{folder}/")]
         else:
             # Return videos in the root directory (no slash in path)
-            return [v for v in all_videos if '/' not in v['rel_path']]
+            return all_videos
     
     # Cache expired or forced refresh, rebuild video list
     print("Refreshing video cache...")
