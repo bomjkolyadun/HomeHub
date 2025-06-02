@@ -120,8 +120,8 @@ def find_videos(root_dir, video_extensions, folder='', force_refresh=False):
         # Filter videos in the specified folder
         return [v for v in videos if v['rel_path'].startswith(f"{folder}/")]
     else:
-        # Return videos in the root directory (no slash in path)
-        return [v for v in videos if '/' not in v['rel_path']]
+        # Return all videos (Home page)
+        return videos
 
 def get_paginated_videos(root_dir, thumb_dir, videos_per_page, video_extensions, page=1, folder=''):
     """
