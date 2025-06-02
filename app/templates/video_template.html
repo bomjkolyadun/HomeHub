@@ -335,6 +335,20 @@
     .search-results a:hover {
       color: #fff;
     }
+    
+    /* Home Icon Link */
+    .home-icon-link {
+      display: block;
+      text-decoration: none;
+      transition: opacity 0.2s ease;
+      cursor: pointer;
+    }
+    .home-icon-link:hover {
+      opacity: 0.8;
+    }
+    .home-icon-link:hover .vod-icon {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
   </style>
 </head>
 <body>
@@ -342,7 +356,9 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <img src="{{ url_for('static', filename='homehub.png') }}" alt="HomeHub" class="vod-icon" title="HomeHub" style="margin: 0 auto 0.5rem auto; display: block;" />
+        <a href="/" class="home-icon-link">
+          <img src="{{ url_for('static', filename='homehub.png') }}" alt="HomeHub" class="vod-icon" title="Click to go to Home" style="margin: 0 auto 0.5rem auto; display: block;" />
+        </a>
         <button class="sidebar-close" id="sidebar-close" style="align-self: flex-end;">&times;</button>
       </div>
       <div class="sidebar-content">
