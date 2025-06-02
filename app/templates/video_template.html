@@ -75,13 +75,6 @@
       justify-content: center;
       align-items: center;
     }
-    .sidebar-close {
-      background: none;
-      border: none;
-      color: #aaa;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
     .folder-list {
       list-style: none;
     }
@@ -233,7 +226,7 @@
         height: 100vh;
         overflow-y: auto;
       }
-      .sidebar-close, .menu-button {
+      .menu-button {
         display: none;
       }
       .main-content {
@@ -258,6 +251,9 @@
       .search-button {
         padding: 0.5rem 0.8rem; /* Smaller padding */
         font-size: 1rem; /* Smaller font */
+      }
+      .refresh-button {
+        display: none; /* Hide refresh button on mobile */
       }
       .overlay {
         position: fixed;
@@ -349,6 +345,84 @@
     .home-icon-link:hover .vod-icon {
       box-shadow: 0 2px 12px rgba(0,0,0,0.25);
     }
+    
+    /* Refresh Button */
+    .refresh-button {
+      background: none;
+      border: 1px solid #444;
+      color: #aaa;
+      padding: 0.7rem 1.2rem;
+      font-size: 1.1rem;
+      margin-left: 1rem;
+      white-space: nowrap;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      height: auto; /* Ensure consistent height */
+    }
+    .refresh-button:hover {
+      color: #fff;
+      border-color: #666;
+      background: #333;
+    }
+    .refresh-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Popup Modal */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .popup-modal {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .popup-modal h3 {
+      margin: 0 0 1rem 0;
+      color: #fff;
+    }
+    .popup-modal p {
+      margin: 0 0 1.5rem 0;
+      color: #ccc;
+    }
+    .popup-modal .loading {
+      color: #aaa;
+      font-style: italic;
+    }
+    .popup-modal .success {
+      color: #4CAF50;
+    }
+    .popup-modal .error {
+      color: #f44336;
+    }
+    .popup-close {
+      background: #444;
+      border: none;
+      color: #fff;
+      padding: 0.7rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .popup-close:hover {
+      background: #555;
+    }
   </style>
 </head>
 <body>
@@ -359,7 +433,6 @@
         <a href="/" class="home-icon-link">
           <img src="{{ url_for('static', filename='homehub.png') }}" alt="HomeHub" class="vod-icon" title="Click to go to Home" style="margin: 0 auto 0.5rem auto; display: block;" />
         </a>
-        <button class="sidebar-close" id="sidebar-close" style="align-self: flex-end;">&times;</button>
       </div>
       <div class="sidebar-content">
         <ul class="folder-list">
@@ -391,7 +464,7 @@
             {% endif %}
             <button type="submit" class="search-button">Search</button>
           </form>
-          <a href="/refresh" style="color: #aaa; text-decoration: none; font-size: 0.9rem; margin-left: 1rem; white-space: nowrap;">Refresh Cache</a>
+          <button id="refresh-btn" class="refresh-button" onclick="refreshCache()">Refresh Cache</button>
         </div>
       </header>
       
@@ -533,7 +606,6 @@
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('overlay');
       const menuButton = document.getElementById('menu-button');
-      const sidebarCloseButton = document.getElementById('sidebar-close');
       
       function openSidebar() {
         sidebar.classList.add('open');
@@ -548,7 +620,6 @@
       }
       
       menuButton.addEventListener('click', openSidebar);
-      sidebarCloseButton.addEventListener('click', closeSidebar);
       overlay.addEventListener('click', closeSidebar);
       
       // Close sidebar on window resize if screen becomes large enough
@@ -557,6 +628,60 @@
           closeSidebar();
         }
       });
+      
+      // Refresh Cache Functionality
+      async function refreshCache() {
+        const refreshBtn = document.getElementById('refresh-btn');
+        const popup = document.getElementById('refresh-popup');
+        const popupTitle = document.getElementById('popup-title');
+        const popupMessage = document.getElementById('popup-message');
+        
+        // Show popup with loading state
+        popupTitle.textContent = 'Refreshing Cache';
+        popupMessage.textContent = 'Please wait while we refresh the video cache...';
+        popupMessage.className = 'loading';
+        popup.style.display = 'flex';
+        
+        // Disable button
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = 'Refreshing...';
+        
+        try {
+          const response = await fetch('/refresh');
+          const data = await response.json();
+          
+          if (data.success) {
+            popupTitle.textContent = 'Success';
+            popupMessage.textContent = data.message;
+            popupMessage.className = 'success';
+          } else {
+            throw new Error(data.message || 'Unknown error');
+          }
+        } catch (error) {
+          popupTitle.textContent = 'Error';
+          popupMessage.textContent = 'Failed to refresh cache: ' + error.message;
+          popupMessage.className = 'error';
+        } finally {
+          // Re-enable button
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = 'Refresh Cache';
+        }
+      }
+      
+      function closePopup() {
+        document.getElementById('refresh-popup').style.display = 'none';
+        // Reload the page to show updated content
+        window.location.reload();
+      }
     </script>
+    
+    <!-- Refresh Cache Popup -->
+    <div id="refresh-popup" class="popup-overlay">
+      <div class="popup-modal">
+        <h3 id="popup-title">Refreshing Cache</h3>
+        <p id="popup-message" class="loading">Please wait while we refresh the video cache...</p>
+        <button class="popup-close" onclick="closePopup()">Close</button>
+      </div>
+    </div>
 </body>
 </html>

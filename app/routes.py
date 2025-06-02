@@ -110,7 +110,7 @@ def get_thumb(filename):
 @main_bp.route("/refresh")
 def refresh_cache():
     """Refresh the video cache"""
-    from flask import current_app
+    from flask import current_app, jsonify
     config = current_app.config.get('VOD_CONFIG', {})
     
     root_dir = os.path.abspath(config['directories']['videos'])
@@ -119,7 +119,10 @@ def refresh_cache():
     find_videos(root_dir, video_extensions, force_refresh=True)
     get_folders(root_dir, force_refresh=True)
     
-    return "Video cache refreshed! <a href='/'>Back to videos</a>"
+    return jsonify({
+        'success': True,
+        'message': 'Video cache refreshed successfully!'
+    })
 
 @main_bp.route("/search")
 def search():
