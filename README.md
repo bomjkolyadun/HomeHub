@@ -1,4 +1,6 @@
-# Video-on-Demand (VOD) Server
+# Homehub
+
+<img src="app/static/homehub.png" alt="HomeHub Logo" width="200" height="100" />
 
 A Flask-based Video-on-Demand server with responsive UI, folder navigation, pagination, and flexible configuration.
 
