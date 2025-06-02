@@ -50,14 +50,6 @@ wheels/
 instance/
 .webassets-cache
 
-# Thumbnails and generated files
-www/thumbnails/
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.webp
-
 # IDE specific files
 .idea/
 .vscode/

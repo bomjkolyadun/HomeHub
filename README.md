@@ -47,7 +47,7 @@ DEFAULT_VOD_CONFIG = {
 Following Flask best practices, instance-specific configurations are stored in the `instance/` folder:
 
 1. **Base Instance Configuration** - `instance/config.py`:
-   
+
    ```python
    # Flask configuration
    SECRET_KEY = "your-secret-key-here"  # Change this in production!
@@ -64,7 +64,7 @@ Following Flask best practices, instance-specific configurations are stored in t
    ```
 
 2. **Environment-specific Configuration** - `instance/config.development.py`:
-   
+
    ```python
    # Development configuration
    SECRET_KEY = "dev-secret-key"
