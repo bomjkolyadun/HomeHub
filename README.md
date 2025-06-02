@@ -17,9 +17,44 @@ A Flask-based Video-on-Demand server with mobile-frendly responsive UI, folder n
 - Warning system for problematic filenames
 - Caching mechanism for directory scanning
 
+## Requirements
+
+- Python 3.7+
+- Flask and dependencies (see `requirements.txt`)
+- **FFmpeg** - Required for thumbnail generation and video processing
+
+### Installing FFmpeg
+
+**macOS (with Homebrew):**
+
+```bash
+brew install ffmpeg
+```
+
+**Ubuntu/Debian:**
+
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+**Windows:**
+
+Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) or use package managers like Chocolatey:
+
+```bash
+choco install ffmpeg
+```
+
+**Verify Installation:**
+
+```bash
+ffmpeg -version
+```
+
 ## Configuration System
 
-The server uses Flask's configuration system with support for defaults and environment-specific overrides. Configuration is handled in Python files rather than JSON.
+The server uses Flask's configuration system with support for defaults and environment-specific overrides.
 
 ### Default Configuration
 
