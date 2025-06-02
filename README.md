@@ -4,7 +4,7 @@
 
 A Flask-based Video-on-Demand server with mobile-frendly responsive UI, folder navigation, pagination, and flexible configuration.
 
-<video src="https://bomjkolyadun.github.io/HomeHub/demo.mp4" controls autoplay loop muted width="480"></video>
+![Demo](https://bomjkolyadun.github.io/HomeHub/demo.gif)
 
 ## Features
 
