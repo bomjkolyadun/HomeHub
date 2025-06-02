@@ -83,7 +83,6 @@ Following Flask best practices, instance-specific configurations are stored in t
 
 Only settings you want to override need to be included. Any settings not specified will fall back to the defaults.
 
-
 ## Usage
 
 ### Starting the server
