@@ -1,5 +1,5 @@
 """
-Configuration management for VOD server (Flask-native)
+Configuration management for Homehub (Flask-native)
 """
 import copy
 from flask import current_app

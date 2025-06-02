@@ -1,5 +1,5 @@
 """
-Default configuration for the VOD server.
+Default configuration for the Homehub.
 These values will be used if not overridden by the instance config.
 """
 

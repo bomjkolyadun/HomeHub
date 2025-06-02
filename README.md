@@ -52,7 +52,7 @@ Following Flask best practices, instance-specific configurations are stored in t
    # Flask configuration
    SECRET_KEY = "your-secret-key-here"  # Change this in production!
    
-   # VOD Server Configuration
+   # Homehub Configuration
    VOD_CONFIG = {
        "server": {
            "port": 8082,

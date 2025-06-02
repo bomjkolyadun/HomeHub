@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VOD Server - Main entry point
+Homehub - Main entry point
 """
 import os
 import argparse
@@ -16,7 +16,7 @@ def main():
         sys.exit(1)
 
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='VOD Server')
+    parser = argparse.ArgumentParser(description='Homehub')
     parser.add_argument('-e', '--env', help='Environment (development, production)', default='production')
     args = parser.parse_args()
 
@@ -42,7 +42,7 @@ def main():
         os.makedirs(thumb_dir, exist_ok=True)
 
         # Print server information
-        print(f"VOD Server Configuration:")
+        print(f"Homehub Configuration:")
         print(f"- Environment: {os.environ.get('FLASK_ENV', 'production')}")
         print(f"- Videos directory: {root_dir}")
         print(f"- Web assets directory: {web_assets_dir}")
