@@ -2,7 +2,9 @@
 
 <img src="app/static/homehub.png" alt="HomeHub Logo" width="200" height="100" />
 
-A Flask-based Video-on-Demand server with responsive UI, folder navigation, pagination, and flexible configuration.
+A Flask-based Video-on-Demand server with mobile-frendly responsive UI, folder navigation, pagination, and flexible configuration.
+
+<video src="https://bomjkolyadun.github.io/HomeHub/demo.mp4" controls autoplay loop muted width="480"></video>
 
 ## Features
 
