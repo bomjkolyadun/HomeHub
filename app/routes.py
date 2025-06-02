@@ -4,9 +4,11 @@ Route definitions for the VOD application.
 from flask import Blueprint, render_template, send_from_directory, request, abort
 import os
 import urllib.parse
+import math
 
 from app.utils.video_utils import decode_filename
 from app.utils.cache_manager import get_paginated_videos, get_folders, find_videos, init_cache
+from app.utils.video_utils import generate_thumbnail
 
 # Create blueprint
 main_bp = Blueprint('main', __name__)
@@ -118,3 +120,47 @@ def refresh_cache():
     get_folders(root_dir, force_refresh=True)
     
     return "Video cache refreshed! <a href='/'>Back to videos</a>"
+
+@main_bp.route("/search")
+def search():
+    """Search videos and folders by name"""
+    from flask import current_app
+    config = current_app.config.get('VOD_CONFIG', {})
+    root_dir = os.path.abspath(config['directories']['videos'])
+    web_assets_dir = os.path.abspath(config['directories']['web_assets'])
+    thumb_dir = os.path.join(web_assets_dir, "thumbnails")
+    videos_per_page = config['video']['per_page']
+    video_extensions = tuple(config['video']['extensions'])
+
+    query = request.args.get('q', '').strip().lower()
+    page = request.args.get('page', 1, type=int)
+    
+    # Search videos
+    all_videos = find_videos(root_dir, video_extensions, folder='')
+    matched_videos = [v for v in all_videos if query in v['filename'].lower() or query in v['rel_path'].lower()]
+
+    # Paginate
+    total_videos = len(matched_videos)
+    total_pages = max(1, math.ceil(total_videos / videos_per_page))
+    page = max(1, min(page, total_pages))
+    start_idx = (page - 1) * videos_per_page
+    end_idx = min(start_idx + videos_per_page, total_videos)
+    paginated_videos = matched_videos[start_idx:end_idx]
+    for video in paginated_videos:
+        video['thumb'] = generate_thumbnail(video['rel_path'], root_dir, thumb_dir)
+
+    # Search folders
+    folders = get_folders(root_dir)
+    matched_folders = [f for f in folders if query in f.lower()]
+
+    return render_template(
+        "video_template.html",
+        videos=paginated_videos,
+        current_page=page,
+        total_pages=total_pages,
+        total_videos=total_videos,
+        current_folder='',
+        folders=folders,
+        search_query=query,
+        matched_folders=matched_folders
+    )
