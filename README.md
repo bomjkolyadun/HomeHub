@@ -162,3 +162,13 @@ Once running, access the server in your web browser:
 
 - Default URL: `http://localhost:8082/`
 - Replace 8082 with your configured port
+
+## Running Tests
+
+To run the automated test suite install the dependencies and execute `pytest`:
+
+```bash
+pip install -r requirements.txt
+pip install pytest
+pytest -q
+```
