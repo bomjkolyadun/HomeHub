@@ -32,14 +32,23 @@ def main():
         from app.config import get_config
         config = get_config()
 
-        # Create necessary directories
+        # Create necessary directories with error handling
         root_dir = os.path.abspath(config['directories']['videos'])
         web_assets_dir = os.path.abspath(config['directories']['web_assets'])
         thumb_dir = os.path.join(web_assets_dir, "thumbnails")
 
-        os.makedirs(root_dir, exist_ok=True)
-        os.makedirs(web_assets_dir, exist_ok=True)
-        os.makedirs(thumb_dir, exist_ok=True)
+        try:
+            os.makedirs(root_dir, exist_ok=True)
+            os.makedirs(web_assets_dir, exist_ok=True)
+            os.makedirs(thumb_dir, exist_ok=True)
+        except OSError as e:
+            print(f"ERROR: Unable to create required directories: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        for path in (root_dir, web_assets_dir, thumb_dir):
+            if not (os.access(path, os.R_OK) and os.access(path, os.W_OK)):
+                print(f"ERROR: Insufficient permissions for directory {path}", file=sys.stderr)
+                sys.exit(1)
 
         # Print server information
         print(f"Homehub Configuration:")
